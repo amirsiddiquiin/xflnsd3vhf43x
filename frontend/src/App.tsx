@@ -1,31 +1,21 @@
 import { useEffect, useMemo, useState } from 'react'
+import { AccuracyPanel } from './components/AccuracyPanel'
+import { DecisionRecord } from './components/DecisionRecord'
 import { LoadingState } from './components/LoadingState'
-import { MetricCard } from './components/MetricCard'
+import { OverviewMetrics } from './components/OverviewMetrics'
 import { WindChart } from './components/WindChart'
+import { dateLabel, dateTimeLabel } from './format'
 import type { WindData } from './types'
 
-const dateLabel = new Intl.DateTimeFormat('en-GB', {
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-  timeZone: 'Europe/London',
-})
-const dateTimeLabel = new Intl.DateTimeFormat('en-GB', {
-  day: 'numeric',
-  month: 'short',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-  hour12: false,
-  timeZone: 'Europe/London',
-  timeZoneName: 'short',
-})
-const timeLabel = new Intl.DateTimeFormat('en-GB', {
-  hour: '2-digit',
-  minute: '2-digit',
-  hour12: false,
-  timeZone: 'Europe/London',
-})
+function WindMark() {
+  return (
+    <svg viewBox="0 0 32 32" className="h-7 w-7" fill="none" aria-hidden="true">
+      <path d="M4 10.5h15.5c3.8 0 3.8-5.5.2-5.5-2 0-3.1 1.2-3.4 2.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M4 16h21c4 0 4 6 0 6-2 0-3.2-1.2-3.5-2.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M4 22h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  )
+}
 
 function App() {
   const [selectedDate, setSelectedDate] = useState('2026-01-15')
@@ -58,149 +48,115 @@ function App() {
 
   const forecastSummary = useMemo(() => {
     if (!data) return { publications: [] as string[], interpolated: 0 }
-    const publications = Array.from(
-      new Set(data.intervals.map((item) => item.forecast_publish_time).filter((value): value is string => Boolean(value))),
-    ).sort()
     return {
-      publications,
+      publications: Array.from(new Set(
+        data.intervals.map((item) => item.forecast_publish_time).filter((value): value is string => Boolean(value)),
+      )).sort(),
       interpolated: data.intervals.filter((item) => item.is_interpolated).length,
     }
   }, [data])
 
   return (
-    <div className="min-h-screen bg-mist text-ink">
-      <header className="relative overflow-hidden bg-[#081c1a] text-white">
-        <div className="pointer-events-none absolute inset-0 opacity-30 [background-image:radial-gradient(circle_at_75%_20%,#2bd4ad_0,transparent_28%),radial-gradient(circle_at_15%_120%,#155f51_0,transparent_36%)]" />
-        <div className="relative mx-auto max-w-7xl px-5 py-10 sm:px-8 sm:py-14 lg:px-10">
-          <div className="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
-            <div className="max-w-3xl">
-              <div className="mb-5 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-500/20 ring-1 ring-teal-400/30">
-                  <svg viewBox="0 0 24 24" className="h-6 w-6 text-teal-300" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-                    <path d="M3 15.5h7.5c2.5 0 2.5-3.5.1-3.5H8" strokeLinecap="round" />
-                    <path d="M3 9h12.5c3.3 0 3.3-5 0-5-1.5 0-2.4.9-2.6 2" strokeLinecap="round" />
-                    <path d="M3 19h13.5c3.3 0 3.3-5 0-5-1.5 0-2.4.9-2.6 2" strokeLinecap="round" />
-                  </svg>
-                </div>
-                <span className="text-xs font-semibold uppercase tracking-[0.22em] text-teal-300">Elexon market insights</span>
-              </div>
-              <h1 className="text-3xl font-semibold tracking-tight sm:text-5xl">UK Wind Generation<br className="hidden sm:block" /> Forecast Dashboard</h1>
-              <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300">
-                Compare the day-ahead wind forecast available to the purchasing team with actual national generation.
-              </p>
+    <div className="min-h-screen bg-canvas text-ink">
+      <div className="h-1 bg-forest" />
+      <header className="border-b border-line bg-paper/95">
+        <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-4 px-5 py-4 sm:px-8 lg:px-12">
+          <div className="flex min-w-0 items-center gap-3.5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-forest/15 bg-forest text-mint"><WindMark /></div>
+            <div className="min-w-0">
+              <p className="truncate text-[15px] font-semibold tracking-[-0.01em] text-ink">Wind Intelligence</p>
+              <p className="text-xs text-muted">Great Britain · National view</p>
             </div>
-
-            <label className="block w-full max-w-xs rounded-2xl border border-white/10 bg-white/[0.07] p-4 backdrop-blur">
-              <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-300">Delivery date</span>
-              <input
-                type="date"
-                min="2026-01-01"
-                max="2026-01-31"
-                value={selectedDate}
-                onChange={(event) => setSelectedDate(event.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-white px-3 py-2.5 font-semibold text-ink outline-none ring-teal-400 transition focus:ring-2"
-              />
-            </label>
           </div>
+          <div className="hidden items-center gap-2 text-xs text-muted sm:flex"><span className="status-dot" />Live Elexon data</div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
+      <main className="mx-auto max-w-[1440px] px-5 pb-10 pt-8 sm:px-8 lg:px-12 lg:pb-14 lg:pt-10">
+        <section className="grid gap-7 border-b border-line pb-8 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div className="max-w-3xl">
+            <p className="eyebrow">Day-ahead forecast performance</p>
+            <h1 className="mt-3 max-w-2xl text-[2rem] font-medium leading-[1.08] tracking-[-0.045em] text-ink sm:text-[2.65rem]">
+              See what the market knew—and what the wind delivered.
+            </h1>
+            <p className="mt-4 max-w-2xl text-sm leading-6 text-muted sm:text-[15px]">
+              A decision-time view of national wind generation forecasts, measured against the resulting outturn.
+            </p>
+          </div>
+
+          <label className="group block w-full lg:w-[270px]">
+            <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Delivery date</span>
+            <div className="relative border-b border-ink/30 transition-colors duration-200 group-focus-within:border-forest">
+              <input
+                type="date" min="2026-01-01" max="2026-01-31" value={selectedDate}
+                onChange={(event) => setSelectedDate(event.target.value)}
+                className="h-12 w-full appearance-none bg-transparent pr-8 text-[17px] font-medium tabular-nums text-ink outline-none"
+              />
+              <svg viewBox="0 0 24 24" className="pointer-events-none absolute right-0 top-3 h-5 w-5 text-muted" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+                <path d="M6.5 3.5v3M17.5 3.5v3M4 9h16M5.5 5h13A1.5 1.5 0 0 1 20 6.5v12a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-12A1.5 1.5 0 0 1 5.5 5Z" />
+              </svg>
+            </div>
+            <span className="mt-2 block text-xs text-muted">January 2026 analysis window</span>
+          </label>
+        </section>
+
         {loading && <LoadingState />}
 
         {!loading && error && (
-          <section className="rounded-2xl border border-red-200 bg-white p-8 text-center shadow-card">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-xl text-red-600">!</div>
-            <h2 className="mt-4 text-lg font-semibold">Data could not be loaded</h2>
-            <p className="mx-auto mt-2 max-w-lg text-sm text-slate-500">{error}</p>
-            <button onClick={() => setRetry((value) => value + 1)} className="mt-5 rounded-xl bg-ink px-4 py-2 text-sm font-semibold text-white">Try again</button>
+          <section className="my-12 border border-danger/20 bg-paper px-6 py-12 text-center">
+            <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-danger/10 text-sm font-semibold text-danger">!</div>
+            <h2 className="mt-4 text-lg font-semibold">We couldn’t retrieve this delivery day</h2>
+            <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-muted">{error}</p>
+            <button onClick={() => setRetry((value) => value + 1)} className="mt-6 border-b border-ink pb-1 text-sm font-semibold text-ink transition-colors duration-200 hover:border-forest hover:text-forest">Try the request again</button>
           </section>
         )}
 
         {!loading && data && (
-          <div className="space-y-7">
-            <section className="grid gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] lg:items-center">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Delivery date</p>
-                <p className="mt-1 text-base font-semibold">{dateLabel.format(new Date(`${data.delivery_date}T12:00:00Z`))}</p>
-              </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Purchase decision cutoff</p>
-                <p className="mt-1 text-base font-semibold">{dateTimeLabel.format(new Date(data.decision_cutoff))}</p>
-              </div>
-              <div className="sm:col-span-2 lg:col-span-1">
-                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-teal-700">
-                  <span className="h-2 w-2 rounded-full bg-teal-500" />
-                  {data.metrics.matched_intervals} intervals matched
-                </span>
-              </div>
-            </section>
-
-            <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <MetricCard label="Average forecast" value={data.metrics.average_forecast_mw} accent="teal" helper="Mean selected day-ahead forecast" />
-              <MetricCard label="Average actual" value={data.metrics.average_actual_mw} accent="coral" helper="Mean metered WIND generation" />
-              <MetricCard label="Mean absolute error" value={data.metrics.mae_mw} accent="slate" helper="Typical size of the forecast miss" />
-              <MetricCard label="Forecast bias" value={data.metrics.bias_mw} accent="slate" helper="Positive means over-forecasting" />
-            </section>
-
-            <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card sm:p-7">
-              <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+          <div key={data.delivery_date} className="content-enter">
+            <section className="py-7" aria-label="Decision context">
+              <div className="decision-rail grid gap-4 sm:grid-cols-[1fr_auto_1fr_auto] sm:items-center">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-teal-700">Daily profile</p>
-                  <h2 className="mt-1 text-xl font-semibold tracking-tight">Forecast vs actual generation</h2>
-                  <p className="mt-1 text-sm text-slate-500">Thirty-minute delivery intervals · National WIND generation</p>
+                  <p className="micro-label">Forecast locked</p>
+                  <p className="mt-1 text-sm font-medium tabular-nums text-ink">{dateTimeLabel.format(new Date(data.decision_cutoff))}</p>
                 </div>
-                <div className="rounded-lg bg-slate-50 px-3 py-2 text-xs font-medium text-slate-500">All times Europe/London</div>
+                <div className="hidden h-px w-10 bg-line sm:block" />
+                <div>
+                  <p className="micro-label">Delivered</p>
+                  <p className="mt-1 text-sm font-medium text-ink">{dateLabel.format(new Date(`${data.delivery_date}T12:00:00Z`))}</p>
+                </div>
+                <span className="justify-self-start border border-success/20 bg-success-wash px-2.5 py-1 text-[11px] font-semibold text-success sm:justify-self-end">{data.metrics.matched_intervals}/48 intervals matched</span>
+              </div>
+            </section>
+
+            <OverviewMetrics metrics={data.metrics} />
+
+            <section className="mt-6 border border-line bg-paper shadow-fine">
+              <div className="flex flex-col justify-between gap-5 border-b border-line px-5 py-5 sm:flex-row sm:items-end sm:px-7 lg:px-8">
+                <div>
+                  <p className="eyebrow">Generation profile</p>
+                  <h2 className="mt-2 text-xl font-medium tracking-[-0.025em] sm:text-2xl">Forecast against actual</h2>
+                  <p className="mt-1.5 text-xs text-muted">Half-hourly delivery intervals · MW · Europe/London</p>
+                </div>
+                <div className="flex items-center gap-5 text-xs font-medium">
+                  <span className="flex items-center gap-2 text-muted"><i className="h-[2px] w-5 bg-forecast" />Forecast</span>
+                  <span className="flex items-center gap-2 text-muted"><i className="h-[2px] w-5 bg-actual" />Actual</span>
+                </div>
               </div>
               {data.intervals.length ? (
-                <div className="mt-5"><WindChart intervals={data.intervals} /></div>
+                <div className="px-2 pb-3 pt-4 sm:px-5 sm:pb-5 lg:px-7"><WindChart intervals={data.intervals} /></div>
               ) : (
-                <div className="mt-6 rounded-xl bg-slate-50 py-16 text-center text-sm text-slate-500">No intervals were returned for this date.</div>
+                <div className="m-6 border border-dashed border-line py-20 text-center text-sm text-muted">No intervals were returned for this date.</div>
               )}
             </section>
 
-            <div className="grid gap-7 lg:grid-cols-[1.25fr_.75fr]">
-              <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-card">
-                <p className="text-xs font-semibold uppercase tracking-wider text-teal-700">Forecast availability</p>
-                <h2 className="mt-1 text-xl font-semibold tracking-tight">What was known at the cutoff</h2>
-                <p className="mt-3 text-sm leading-6 text-slate-500">Only forecasts published by the purchasing cutoff are eligible. The latest eligible publication is selected independently for each source interval.</p>
-                <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-xl bg-slate-50 p-4">
-                    <p className="text-xs font-medium text-slate-400">{forecastSummary.publications.length === 1 ? 'Selected publication' : 'Publication range used'}</p>
-                    <p className="mt-2 text-sm font-semibold">
-                      {forecastSummary.publications.length === 1
-                        ? dateTimeLabel.format(new Date(forecastSummary.publications[0]))
-                        : forecastSummary.publications.length > 1
-                          ? `${timeLabel.format(new Date(forecastSummary.publications[0]))}–${timeLabel.format(new Date(forecastSummary.publications.at(-1)!))}`
-                        : 'No eligible publication'}
-                    </p>
-                    {forecastSummary.publications.length > 1 && <p className="mt-1 text-xs text-slate-500">{dateLabel.format(new Date(forecastSummary.publications.at(-1)!))}</p>}
-                  </div>
-                  <div className="rounded-xl bg-slate-50 p-4">
-                    <p className="text-xs font-medium text-slate-400">Half-hour estimates</p>
-                    <p className="mt-2 text-sm font-semibold">{forecastSummary.interpolated} interpolated intervals</p>
-                    <p className="mt-1 text-xs text-slate-500">From Elexon hourly WINDFOR points</p>
-                  </div>
-                </div>
-                <p className="mt-4 rounded-xl border border-teal-100 bg-teal-50/60 px-4 py-3 text-xs leading-5 text-teal-700">{data.methodology}</p>
-              </section>
-
-              <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-card">
-                <p className="text-xs font-semibold uppercase tracking-wider text-teal-700">Accuracy</p>
-                <h2 className="mt-1 text-xl font-semibold tracking-tight">How to read the metrics</h2>
-                <dl className="mt-5 space-y-4 text-sm">
-                  <div><dt className="font-semibold">Error</dt><dd className="mt-1 text-slate-500">Forecast − Actual for each interval.</dd></div>
-                  <div><dt className="font-semibold">MAE</dt><dd className="mt-1 text-slate-500">Average absolute error; lower is better.</dd></div>
-                  <div><dt className="font-semibold">RMSE · {data.metrics.rmse_mw === null ? '—' : `${Math.round(data.metrics.rmse_mw).toLocaleString('en-GB')} MW`}</dt><dd className="mt-1 text-slate-500">Weights larger misses more heavily.</dd></div>
-                  <div><dt className="font-semibold">Bias</dt><dd className="mt-1 text-slate-500">Shows systematic over- or under-forecasting.</dd></div>
-                </dl>
-                {data.metrics.missing_intervals > 0 && <p className="mt-5 text-xs text-amber-700">{data.metrics.missing_intervals} interval(s) excluded due to missing data.</p>}
-              </section>
+            <div className="mt-6 grid gap-6 lg:grid-cols-[1.08fr_.92fr]">
+              <AccuracyPanel metrics={data.metrics} />
+              <DecisionRecord decisionCutoff={data.decision_cutoff} methodology={data.methodology} publications={forecastSummary.publications} interpolated={forecastSummary.interpolated} />
             </div>
 
-            <footer className="flex flex-col justify-between gap-2 border-t border-slate-200 py-5 text-xs text-slate-400 sm:flex-row">
-              <span>Source: Elexon Insights API · FUELHH and WINDFOR</span>
-              <span>Decision assumption: 12:00 London time, prior day</span>
+            <footer className="mt-10 flex flex-col justify-between gap-3 border-t border-line pt-5 text-[11px] text-muted sm:flex-row">
+              <span>Data source: Elexon Insights · FUELHH & WINDFOR</span>
+              <span>Analysis scope: Great Britain · January 2026</span>
             </footer>
           </div>
         )}
