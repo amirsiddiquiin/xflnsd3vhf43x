@@ -81,22 +81,34 @@ def select_forecasts(
     )
 
     target_index = pd.date_range(start=start, end=end, freq="30min", inclusive="left")
-    combined_index = frame.index.union(target_index).sort_values()
-    generation = frame["generation"].reindex(combined_index).interpolate(method="time")
+    generation = frame["generation"].reindex(target_index)
+    published = frame["publishTime"].reindex(target_index)
+    interpolated = pd.Series(False, index=target_index)
 
-    # Forecast publications usually match across a vintage. At an interpolated point,
-    # use the most recent of the adjacent eligible source publications.
-    published = frame["publishTime"].reindex(combined_index)
-    published = pd.concat(
-        [published.ffill().rename("previous"), published.bfill().rename("next")], axis=1
-    ).max(axis=1)
+    # Fill only a half-hour whose immediate surrounding hourly source points both
+    # exist. This avoids extrapolating endpoints or partially filling a wider gap.
+    half_hour = pd.Timedelta(minutes=30)
+    for target in target_index[generation.isna()]:
+        previous = target - half_hour
+        following = target + half_hour
+        if previous not in frame.index or following not in frame.index:
+            continue
+        previous_value = frame.at[previous, "generation"]
+        following_value = frame.at[following, "generation"]
+        if pd.isna(previous_value) or pd.isna(following_value):
+            continue
+        generation.at[target] = (previous_value + following_value) / 2
+        published.at[target] = max(
+            frame.at[previous, "publishTime"], frame.at[following, "publishTime"]
+        )
+        interpolated.at[target] = True
 
     result = pd.DataFrame(
         {
             "start_time": target_index,
-            "forecast_mw": generation.reindex(target_index).values,
-            "forecast_publish_time": published.reindex(target_index).array,
-            "is_interpolated": ~target_index.isin(frame.index),
+            "forecast_mw": generation.values,
+            "forecast_publish_time": published.array,
+            "is_interpolated": interpolated.values,
         }
     )
     return result.dropna(subset=["forecast_mw"])

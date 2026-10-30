@@ -1,15 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AccuracyPanel } from './components/AccuracyPanel'
+import { DecisionContext } from './components/DecisionContext'
 import { DecisionRecord } from './components/DecisionRecord'
+import { InsightPanel } from './components/InsightPanel'
 import { LoadingState } from './components/LoadingState'
 import { OverviewMetrics } from './components/OverviewMetrics'
 import { WindChart } from './components/WindChart'
-import { dateLabel, dateTimeLabel } from './format'
 import type { WindData } from './types'
+
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '')
 
 function WindMark() {
   return (
-    <svg viewBox="0 0 32 32" className="h-7 w-7" fill="none" aria-hidden="true">
+    <svg viewBox="0 0 32 32" className="h-5 w-5" fill="none" aria-hidden="true">
       <path d="M4 10.5h15.5c3.8 0 3.8-5.5.2-5.5-2 0-3.1 1.2-3.4 2.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
       <path d="M4 16h21c4 0 4 6 0 6-2 0-3.2-1.2-3.5-2.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
       <path d="M4 22h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -30,7 +33,7 @@ function App() {
       setLoading(true)
       setError(null)
       try {
-        const response = await fetch(`/api/wind-data?date=${selectedDate}`, { signal: controller.signal })
+        const response = await fetch(`${API_BASE_URL}/api/wind-data?date=${selectedDate}`, { signal: controller.signal })
         const payload = await response.json()
         if (!response.ok) throw new Error(payload.detail ?? 'Unable to load Elexon data')
         setData(payload)
@@ -58,106 +61,97 @@ function App() {
 
   return (
     <div className="min-h-screen bg-canvas text-ink">
-      <div className="h-1 bg-forest" />
-      <header className="border-b border-line bg-paper/95">
-        <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-4 px-5 py-4 sm:px-8 lg:px-12">
-          <div className="flex min-w-0 items-center gap-3.5">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-forest/15 bg-forest text-mint"><WindMark /></div>
+      <header className="border-b border-line bg-white">
+        <div className="mx-auto flex h-[60px] max-w-[1320px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-feature text-chart-forecast"><WindMark /></div>
             <div className="min-w-0">
-              <p className="truncate text-[15px] font-semibold tracking-[-0.01em] text-ink">Wind Intelligence</p>
-              <p className="text-xs text-muted">Great Britain · National view</p>
+              <p className="truncate text-sm font-semibold tracking-[-0.015em]">Wind Intelligence</p>
+              <p className="text-[10px] text-muted sm:text-[11px]">Day-ahead decision workspace</p>
             </div>
           </div>
-          <div className="hidden items-center gap-2 text-xs text-muted sm:flex"><span className="status-dot" />Live Elexon data</div>
+          <div className="flex items-center gap-3 text-[11px] text-muted sm:gap-5">
+            <span className="hidden sm:inline">January 2026</span>
+            <span className="flex items-center gap-2"><i className="status-dot" />Elexon data</span>
+          </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1440px] px-5 pb-10 pt-8 sm:px-8 lg:px-12 lg:pb-14 lg:pt-10">
-        <section className="grid gap-7 border-b border-line pb-8 lg:grid-cols-[1fr_auto] lg:items-end">
-          <div className="max-w-3xl">
-            <p className="eyebrow">Day-ahead forecast performance</p>
-            <h1 className="mt-3 max-w-2xl text-[2rem] font-medium leading-[1.08] tracking-[-0.045em] text-ink sm:text-[2.65rem]">
-              See what the market knew—and what the wind delivered.
-            </h1>
-            <p className="mt-4 max-w-2xl text-sm leading-6 text-muted sm:text-[15px]">
-              A decision-time view of national wind generation forecasts, measured against the resulting outturn.
-            </p>
+      <main className="mx-auto max-w-[1320px] px-4 pb-10 pt-6 sm:px-6 lg:px-8 lg:pb-12 lg:pt-8">
+        <div className="mb-5 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+          <div>
+            <p className="section-kicker">January 2026 purchase decisions</p>
+            <h1 className="mt-1 text-2xl font-semibold tracking-[-0.03em] sm:text-[1.75rem]">Day-ahead forecast performance</h1>
           </div>
-
-          <label className="group block w-full lg:w-[270px]">
-            <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Delivery date</span>
-            <div className="relative border-b border-ink/30 transition-colors duration-200 group-focus-within:border-forest">
-              <input
-                type="date" min="2026-01-01" max="2026-01-31" value={selectedDate}
-                onChange={(event) => setSelectedDate(event.target.value)}
-                className="h-12 w-full appearance-none bg-transparent pr-8 text-[17px] font-medium tabular-nums text-ink outline-none"
-              />
-              <svg viewBox="0 0 24 24" className="pointer-events-none absolute right-0 top-3 h-5 w-5 text-muted" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
-                <path d="M6.5 3.5v3M17.5 3.5v3M4 9h16M5.5 5h13A1.5 1.5 0 0 1 20 6.5v12a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-12A1.5 1.5 0 0 1 5.5 5Z" />
-              </svg>
-            </div>
-            <span className="mt-2 block text-xs text-muted">January 2026 analysis window</span>
-          </label>
-        </section>
+          <p className="max-w-lg text-xs leading-5 text-muted sm:text-right">Forecast available at purchase cutoff compared with national wind outturn.</p>
+        </div>
 
         {loading && <LoadingState />}
 
         {!loading && error && (
-          <section className="my-12 border border-danger/20 bg-paper px-6 py-12 text-center">
-            <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-danger/10 text-sm font-semibold text-danger">!</div>
-            <h2 className="mt-4 text-lg font-semibold">We couldn’t retrieve this delivery day</h2>
+          <section className="rounded-xl border border-danger/20 bg-white px-6 py-12 text-center">
+            <h2 className="text-lg font-semibold">This delivery day could not be retrieved</h2>
             <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-muted">{error}</p>
-            <button onClick={() => setRetry((value) => value + 1)} className="mt-6 border-b border-ink pb-1 text-sm font-semibold text-ink transition-colors duration-200 hover:border-forest hover:text-forest">Try the request again</button>
+            <button onClick={() => setRetry((value) => value + 1)} className="mt-5 rounded-md bg-feature px-4 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-feature-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forecast">Try again</button>
           </section>
         )}
 
         {!loading && data && (
-          <div key={data.delivery_date} className="content-enter">
-            <section className="py-7" aria-label="Decision context">
-              <div className="decision-rail grid gap-4 sm:grid-cols-[1fr_auto_1fr_auto] sm:items-center">
-                <div>
-                  <p className="micro-label">Forecast locked</p>
-                  <p className="mt-1 text-sm font-medium tabular-nums text-ink">{dateTimeLabel.format(new Date(data.decision_cutoff))}</p>
-                </div>
-                <div className="hidden h-px w-10 bg-line sm:block" />
-                <div>
-                  <p className="micro-label">Delivered</p>
-                  <p className="mt-1 text-sm font-medium text-ink">{dateLabel.format(new Date(`${data.delivery_date}T12:00:00Z`))}</p>
-                </div>
-                <span className="justify-self-start border border-success/20 bg-success-wash px-2.5 py-1 text-[11px] font-semibold text-success sm:justify-self-end">{data.metrics.matched_intervals}/48 intervals matched</span>
-              </div>
-            </section>
+          <div key={data.delivery_date} className="content-enter space-y-5">
+            <DecisionContext
+              deliveryDate={data.delivery_date}
+              decisionCutoff={data.decision_cutoff}
+              publicationTime={forecastSummary.publications.at(-1) ?? null}
+              matchedIntervals={data.metrics.matched_intervals}
+              selectedDate={selectedDate}
+              onDateChange={setSelectedDate}
+            />
 
-            <OverviewMetrics metrics={data.metrics} />
+            {data.intervals.length === 0 ? (
+              <section className="border-y border-line py-12 text-center">
+                <h2 className="text-base font-semibold text-ink">No aligned wind data is available for this delivery date</h2>
+                <p className="mx-auto mt-2 max-w-lg text-xs leading-5 text-muted">Choose another delivery date in the January decision window. Previously loaded values are not shown.</p>
+              </section>
+            ) : (
+              <>
+                <OverviewMetrics metrics={data.metrics} />
 
-            <section className="mt-6 border border-line bg-paper shadow-fine">
-              <div className="flex flex-col justify-between gap-5 border-b border-line px-5 py-5 sm:flex-row sm:items-end sm:px-7 lg:px-8">
-                <div>
-                  <p className="eyebrow">Generation profile</p>
-                  <h2 className="mt-2 text-xl font-medium tracking-[-0.025em] sm:text-2xl">Forecast against actual</h2>
-                  <p className="mt-1.5 text-xs text-muted">Half-hourly delivery intervals · MW · Europe/London</p>
+                <section className="overflow-hidden rounded-xl bg-feature shadow-chart">
+                  <div className="flex flex-col justify-between gap-4 border-b border-white/10 px-5 py-4 sm:flex-row sm:items-end sm:px-6">
+                    <div>
+                      <p className="section-kicker text-chart-forecast">Generation profile</p>
+                      <h2 className="mt-1 text-lg font-semibold tracking-[-0.02em] text-white sm:text-xl">Forecast vs actual generation</h2>
+                      <p className="mt-1 text-[11px] text-chart-muted">30-minute delivery intervals · MW · Europe/London</p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px]">
+                      <span className="flex items-center gap-2 text-chart-muted"><i className="h-[2px] w-4 bg-chart-forecast" />Forecast</span>
+                      <span className="flex items-center gap-2 text-chart-muted"><i className="h-[2px] w-4 bg-chart-actual" />Actual</span>
+                      <span className="flex items-center gap-2 text-chart-muted"><i className="h-1.5 w-1.5 rounded-full border border-chart-forecast bg-feature" />Published hour</span>
+                    </div>
+                  </div>
+                  <div className="px-1 pb-3 pt-3 sm:px-3 sm:pb-4 lg:px-5"><WindChart intervals={data.intervals} /></div>
+                  <div className="border-t border-white/10 px-5 py-2.5 text-[10px] leading-4 text-chart-muted sm:px-6">
+                    Forecast markers are directly published hourly WINDFOR points. Connecting half-hours are transparent linear estimates for alignment with FUELHH.
+                  </div>
+                </section>
+
+                <InsightPanel metrics={data.metrics} />
+
+                <div className="grid gap-5 border-t border-line pt-5 lg:grid-cols-[.9fr_1.1fr]">
+                  <AccuracyPanel metrics={data.metrics} />
+                  <DecisionRecord
+                    methodology={data.methodology}
+                    publications={forecastSummary.publications}
+                    interpolated={forecastSummary.interpolated}
+                  />
                 </div>
-                <div className="flex items-center gap-5 text-xs font-medium">
-                  <span className="flex items-center gap-2 text-muted"><i className="h-[2px] w-5 bg-forecast" />Forecast</span>
-                  <span className="flex items-center gap-2 text-muted"><i className="h-[2px] w-5 bg-actual" />Actual</span>
-                </div>
-              </div>
-              {data.intervals.length ? (
-                <div className="px-2 pb-3 pt-4 sm:px-5 sm:pb-5 lg:px-7"><WindChart intervals={data.intervals} /></div>
-              ) : (
-                <div className="m-6 border border-dashed border-line py-20 text-center text-sm text-muted">No intervals were returned for this date.</div>
-              )}
-            </section>
 
-            <div className="mt-6 grid gap-6 lg:grid-cols-[1.08fr_.92fr]">
-              <AccuracyPanel metrics={data.metrics} />
-              <DecisionRecord decisionCutoff={data.decision_cutoff} methodology={data.methodology} publications={forecastSummary.publications} interpolated={forecastSummary.interpolated} />
-            </div>
-
-            <footer className="mt-10 flex flex-col justify-between gap-3 border-t border-line pt-5 text-[11px] text-muted sm:flex-row">
-              <span>Data source: Elexon Insights · FUELHH & WINDFOR</span>
-              <span>Analysis scope: Great Britain · January 2026</span>
-            </footer>
+                <footer className="flex flex-col justify-between gap-2 border-t border-line pt-4 text-[10px] text-muted sm:flex-row">
+                  <span>Source: Elexon Insights · FUELHH & WINDFOR</span>
+                  <span>National view · Great Britain · January 2026 decision window</span>
+                </footer>
+              </>
+            )}
           </div>
         )}
       </main>

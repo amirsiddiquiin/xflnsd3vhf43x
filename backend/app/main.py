@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
+import os
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Query
@@ -17,9 +18,17 @@ from .elexon import ElexonError, fetch_day_data
 from .schemas import Interval, Metrics, WindDataResponse
 
 app = FastAPI(title="UK Wind Forecast Dashboard API", version="1.0.0")
+cors_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ORIGINS", "http://localhost:5173,http://localhost:3000"
+    ).split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["GET"],
     allow_headers=["*"],
@@ -41,10 +50,19 @@ def _optional_datetime(value: object):
 
 @app.get("/api/wind-data", response_model=WindDataResponse)
 async def wind_data(
-    selected_date: date = Query(alias="date", description="A delivery date in January 2026"),
+    selected_date: date = Query(
+        alias="date",
+        description="Delivery date for a January 2026 purchasing decision (2 Jan–1 Feb)",
+    ),
 ) -> WindDataResponse:
-    if selected_date < date(2026, 1, 1) or selected_date > date(2026, 1, 31):
-        raise HTTPException(status_code=422, detail="Date must be in January 2026")
+    if selected_date < date(2026, 1, 2) or selected_date > date(2026, 2, 1):
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "Delivery date must be from 2 January through 1 February 2026 "
+                "to represent purchasing decisions made in January 2026"
+            ),
+        )
 
     cutoff = decision_cutoff(selected_date)
     try:
@@ -76,7 +94,8 @@ async def wind_data(
         metrics=metrics,
         intervals=intervals,
         methodology=(
-            "Latest forecast published on or before 12:00 Europe/London on the prior day; "
-            "hourly WINDFOR values are linearly interpolated to FUELHH half-hour intervals."
+            "Latest hourly WINDFOR points published on or before 12:00 Europe/London on the prior day. "
+            "The 24 intervening half-hours are linear estimates used only to align with the 48 FUELHH outturn intervals; "
+            "no forecast published after the cutoff is used."
         ),
     )
