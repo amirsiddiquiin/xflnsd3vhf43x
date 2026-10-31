@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import type { Metrics } from '../types'
 
 const number = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 0 })
@@ -12,11 +13,30 @@ interface MetricProps {
 }
 
 function Metric({ label, value: metricValue, note, primary = false }: MetricProps) {
+  const previousValue = useRef(metricValue)
+  const frame = useRef<number | null>(null)
+  const [changing, setChanging] = useState(false)
+
+  useEffect(() => {
+    if (previousValue.current === metricValue) return
+    previousValue.current = metricValue
+    setChanging(false)
+    frame.current = requestAnimationFrame(() => setChanging(true))
+    const timer = window.setTimeout(() => setChanging(false), 260)
+    return () => {
+      if (frame.current !== null) cancelAnimationFrame(frame.current)
+      window.clearTimeout(timer)
+    }
+  }, [metricValue])
+
   return (
-    <div className={`min-w-0 bg-white px-3 py-4 sm:px-4 lg:px-5 ${primary ? 'md:py-5' : ''}`}>
+    <div className={`metric-cell min-w-0 bg-white px-3 py-4 sm:px-4 lg:px-5 ${primary ? 'md:py-5' : ''}`}>
       <p className="field-label">{label}</p>
       <div className="mt-2 flex items-baseline gap-1.5">
-        <strong className={`metric-number text-ink ${primary ? 'text-[1.8rem] sm:text-[2.15rem]' : 'text-[1.25rem] sm:text-[1.5rem] lg:text-[1.7rem]'}`}>{metricValue}</strong>
+        <strong
+          className={`metric-number text-ink ${changing ? 'metric-value-change' : ''} ${primary ? 'text-[1.8rem] sm:text-[2.15rem]' : 'text-[1.25rem] sm:text-[1.5rem] lg:text-[1.7rem]'}`}
+          aria-live="polite"
+        >{metricValue}</strong>
         <span className="text-[10px] font-medium text-muted">MW</span>
       </div>
       <p className="mt-1.5 text-[10px] leading-4 text-muted sm:text-[11px]">{note}</p>
@@ -34,7 +54,7 @@ export function OverviewMetrics({ metrics }: { metrics: Metrics }) {
         : 'Balanced on average'
 
   return (
-    <section className="overflow-hidden rounded-xl border border-line bg-line" aria-label="Forecast overview">
+    <section className="metric-shell overflow-hidden rounded-[14px] border border-line/80 bg-line" aria-label="Forecast overview">
       <div className="grid gap-px md:grid-cols-[2.3fr_2.75fr]">
         <div className="grid grid-cols-2 gap-px bg-line">
           <Metric label="Expected wind" value={value(metrics.average_forecast_mw)} note="Average at decision time" primary />

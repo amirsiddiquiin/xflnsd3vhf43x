@@ -8,13 +8,14 @@ interface DecisionContextProps {
   matchedIntervals: number
   selectedDate: string
   onDateChange: (value: string) => void
+  refreshing?: boolean
 }
 
 export function DecisionContext({
-  deliveryDate, decisionCutoff, publicationTime, matchedIntervals, selectedDate, onDateChange,
+  deliveryDate, decisionCutoff, publicationTime, matchedIntervals, selectedDate, onDateChange, refreshing = false,
 }: DecisionContextProps) {
   return (
-    <section className="overflow-hidden rounded-xl border border-line bg-white" aria-label="Decision context">
+    <section className="decision-context overflow-hidden rounded-[14px] border border-line/80 bg-white" aria-label="Decision context">
       <div className="grid md:grid-cols-[200px_1fr_auto] md:items-stretch lg:grid-cols-[220px_1fr_auto]">
         <div className="border-b border-line px-4 py-4 sm:px-5 md:border-b-0 md:border-r">
           <p className="field-label">Delivery date</p>
@@ -45,7 +46,10 @@ export function DecisionContext({
         </div>
 
         <div className="flex items-center justify-between gap-3 border-t border-line px-4 py-3 md:w-[125px] md:flex-col md:justify-center md:border-l md:border-t-0 lg:w-[145px]">
-          <span className="text-[10px] font-medium text-muted">Data alignment</span>
+          <span className="flex items-center gap-1.5 text-[10px] font-medium text-muted">
+            {refreshing && <i className="refresh-dot" aria-hidden="true" />}
+            {refreshing ? 'Updating' : 'Data alignment'}
+          </span>
           <p className="text-sm font-semibold tabular-nums text-ink">{matchedIntervals}<span className="font-normal text-muted"> / 48</span></p>
         </div>
       </div>

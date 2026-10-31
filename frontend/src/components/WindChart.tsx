@@ -26,7 +26,7 @@ function ChartTooltip({ active, payload, label }: TooltipProps<number, string>) 
         : 'Forecast matched actual generation'
 
   return (
-    <div className="min-w-[220px] rounded-lg border border-white/10 bg-[#183840] p-3 text-white shadow-tooltip">
+    <div className="chart-tooltip min-w-[220px] rounded-lg border border-white/10 bg-[#183840] p-3 text-white shadow-tooltip">
       <div className="flex items-center justify-between gap-5 border-b border-white/10 pb-2.5">
         <span className="text-[10px] font-medium text-chart-muted">Delivery interval</span>
         <span className="text-xs font-semibold tabular-nums">{label}</span>
@@ -72,7 +72,7 @@ export function WindChart({ intervals }: { intervals: Interval[] }) {
   }))
 
   return (
-    <div className="h-[320px] w-full sm:h-[380px] lg:h-[410px]">
+    <div className="h-[300px] w-full sm:h-[345px] lg:h-[370px]">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 12, right: 10, left: -8, bottom: 2 }}>
           <CartesianGrid stroke="#29464d" strokeOpacity={0.68} strokeDasharray="2 6" vertical={false} />
@@ -89,12 +89,12 @@ export function WindChart({ intervals }: { intervals: Interval[] }) {
           <Line
             type="linear" dataKey="forecast_mw" name="Forecast" stroke="#2dd4bf" strokeWidth={2.2}
             dot={false} activeDot={{ r: 5, fill: '#2dd4bf', stroke: '#102a30', strokeWidth: 2.5 }}
-            connectNulls={false} isAnimationActive={!reduceMotion} animationDuration={400}
+            connectNulls={false} isAnimationActive={!reduceMotion} animationDuration={260} animationEasing="ease-out"
           />
           <Line
             type="linear" dataKey="actual_mw" name="Actual" stroke="#8fa0ff" strokeWidth={2.2}
             dot={false} activeDot={{ r: 5, fill: '#8fa0ff', stroke: '#102a30', strokeWidth: 2.5 }}
-            connectNulls={false} isAnimationActive={!reduceMotion} animationDuration={400}
+            connectNulls={false} isAnimationActive={!reduceMotion} animationDuration={260} animationEasing="ease-out"
           />
           <Line
             type="linear" dataKey="direct_forecast_mw" name="Published forecast point" stroke="transparent" strokeWidth={0}

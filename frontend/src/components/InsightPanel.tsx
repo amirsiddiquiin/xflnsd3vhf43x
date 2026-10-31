@@ -17,7 +17,7 @@ export function InsightPanel({ metrics }: { metrics: Metrics }) {
       : 'The signed errors offset across the day, although individual intervals may still contain forecast misses.'
 
   return (
-    <section className="border-l-2 border-warning px-4 py-2 sm:px-5 lg:flex lg:items-start lg:justify-between lg:gap-10">
+    <section className="insight-panel border-l-2 border-warning px-4 py-2 sm:px-5 lg:flex lg:items-start lg:justify-between lg:gap-10">
       <div>
         <p className="section-kicker text-warning-deep">Forecast observation</p>
         <h2 className="mt-1 text-sm font-semibold tracking-[-0.01em] text-ink sm:text-base">{headline}</h2>

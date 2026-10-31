@@ -61,7 +61,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-canvas text-ink">
-      <header className="border-b border-line bg-white">
+      <header className="app-header border-b border-line/80 bg-white">
         <div className="mx-auto flex h-[60px] max-w-[1320px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-2.5">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-feature text-chart-forecast"><WindMark /></div>
@@ -77,8 +77,8 @@ function App() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1320px] px-4 pb-10 pt-6 sm:px-6 lg:px-8 lg:pb-12 lg:pt-8">
-        <div className="mb-5 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+      <main className="mx-auto max-w-[1320px] px-4 pb-10 pt-6 sm:px-6 lg:px-8 lg:pb-12 lg:pt-7">
+        <div className="page-intro mb-5 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
           <div>
             <p className="section-kicker">January 2026 purchase decisions</p>
             <h1 className="mt-1 text-2xl font-semibold tracking-[-0.03em] sm:text-[1.75rem]">Day-ahead forecast performance</h1>
@@ -86,7 +86,7 @@ function App() {
           <p className="max-w-lg text-xs leading-5 text-muted sm:text-right">Forecast available at purchase cutoff compared with national wind outturn.</p>
         </div>
 
-        {loading && <LoadingState />}
+        {loading && !data && <LoadingState />}
 
         {!loading && error && (
           <section className="rounded-xl border border-danger/20 bg-white px-6 py-12 text-center">
@@ -96,8 +96,8 @@ function App() {
           </section>
         )}
 
-        {!loading && data && (
-          <div key={data.delivery_date} className="content-enter space-y-5">
+        {data && (
+          <div className={`content-enter space-y-5 ${loading ? 'is-refreshing' : ''}`} aria-busy={loading}>
             <DecisionContext
               deliveryDate={data.delivery_date}
               decisionCutoff={data.decision_cutoff}
@@ -105,6 +105,7 @@ function App() {
               matchedIntervals={data.metrics.matched_intervals}
               selectedDate={selectedDate}
               onDateChange={setSelectedDate}
+              refreshing={loading}
             />
 
             {data.intervals.length === 0 ? (
@@ -116,7 +117,7 @@ function App() {
               <>
                 <OverviewMetrics metrics={data.metrics} />
 
-                <section className="overflow-hidden rounded-xl bg-feature shadow-chart">
+                <section className="chart-panel overflow-hidden rounded-[14px] bg-feature shadow-chart">
                   <div className="flex flex-col justify-between gap-4 border-b border-white/10 px-5 py-4 sm:flex-row sm:items-end sm:px-6">
                     <div>
                       <p className="section-kicker text-chart-forecast">Generation profile</p>

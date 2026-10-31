@@ -14,7 +14,7 @@
 
 * { box-sizing: border-box; }
 html { background: #f7f8fa; }
-body { margin: 0; min-width: 320px; min-height: 100vh; }
+body { margin: 0; min-width: 320px; min-height: 100vh; -webkit-font-smoothing: antialiased; }
 button, input { font: inherit; }
 button { cursor: pointer; }
 ::selection { background: #bdece5; color: #102a30; }
@@ -31,7 +31,8 @@ button { cursor: pointer; }
 .section-kicker { color: #0d9488; }
 .metric-number { font-weight: 600; line-height: 1; letter-spacing: -0.045em; font-variant-numeric: tabular-nums; }
 .tabular-nums { font-variant-numeric: tabular-nums; }
-.status-dot { width: 0.38rem; height: 0.38rem; flex: none; border-radius: 999px; background: #159a76; }
+.status-dot { width: 0.38rem; height: 0.38rem; flex: none; border-radius: 999px; background: #159a76; box-shadow: 0 0 0 3px rgba(21, 154, 118, 0.09); }
+.refresh-dot { width: 0.35rem; height: 0.35rem; flex: none; border-radius: 999px; background: #0d9488; animation: refresh-pulse 1s ease-in-out infinite; }
 
 .date-trigger {
   margin-top: 0.5rem;
@@ -49,10 +50,10 @@ button { cursor: pointer; }
   font-size: 0.78rem;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
-  transition: border-color 140ms ease, box-shadow 140ms ease;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
 }
 
-.date-trigger:hover { border-color: #94a3b1; }
+.date-trigger:hover { border-color: #94a3b1; background: #fbfcfd; }
 .date-trigger:focus-visible {
   border-color: #0d9488;
   outline: none;
@@ -68,6 +69,8 @@ button { cursor: pointer; }
   padding: 0.75rem;
   color: #102329;
   box-shadow: 0 12px 28px rgba(15, 35, 41, 0.12);
+  transform-origin: top left;
+  animation: popover-in 160ms ease-out both;
 }
 
 .date-popover .rdp-root {
@@ -147,7 +150,25 @@ button { cursor: pointer; }
 .timeline-delivery { border-color: #4f6bff; }
 .timeline-connector { display: none; }
 
-.content-enter { animation: content-in 160ms ease-out both; }
+.app-header { animation: header-in 220ms ease-out both; }
+.page-intro { animation: section-in 240ms 30ms ease-out both; }
+.content-enter > * { animation: section-in 240ms ease-out both; }
+.content-enter > :nth-child(1) { animation-delay: 55ms; }
+.content-enter > :nth-child(2) { animation-delay: 85ms; }
+.content-enter > :nth-child(3) { animation-delay: 115ms; }
+.content-enter > :nth-child(4) { animation-delay: 145ms; }
+.content-enter > :nth-child(n+5) { animation-delay: 175ms; }
+.decision-context,
+.metric-shell,
+.chart-panel { transition: border-color 180ms ease, box-shadow 220ms ease, opacity 180ms ease; }
+.metric-cell { transition: background-color 180ms ease; }
+.metric-cell:hover { background: #fbfcfd; }
+.chart-panel:hover { box-shadow: 0 14px 34px rgba(16, 42, 48, 0.12); }
+.chart-tooltip { animation: tooltip-in 140ms ease-out both; }
+.insight-panel { transition: background-color 180ms ease; }
+.insight-panel:hover { background: rgba(255, 247, 233, 0.42); }
+.metric-value-change { animation: metric-change 240ms ease-out both; }
+.is-refreshing > :not(:first-child) { opacity: 0.62; pointer-events: none; }
 .skeleton, .skeleton-dark { position: relative; overflow: hidden; background: #e9edf2; }
 .skeleton-dark { background: #234149; }
 .skeleton::after, .skeleton-dark::after {
@@ -160,7 +181,12 @@ button { cursor: pointer; }
 }
 .skeleton-dark::after { background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent); }
 
-@keyframes content-in { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes header-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes section-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes metric-change { from { opacity: 0.45; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes tooltip-in { from { opacity: 0; transform: translateY(2px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes popover-in { from { opacity: 0; transform: translateY(-3px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes refresh-pulse { 0%, 100% { opacity: .45; transform: scale(.85); } 50% { opacity: 1; transform: scale(1); } }
 @keyframes shimmer { 100% { transform: translateX(100%); } }
 
 @media (min-width: 640px) {
