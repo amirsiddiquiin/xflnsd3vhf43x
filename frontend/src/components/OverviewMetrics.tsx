@@ -30,16 +30,19 @@ function Metric({ label, value: metricValue, note, primary = false }: MetricProp
   }, [metricValue])
 
   return (
-    <div className={`metric-cell min-w-0 bg-white px-3 py-4 sm:px-4 lg:px-5 ${primary ? 'md:py-5' : ''}`}>
-      <p className="field-label">{label}</p>
+    <div className={`metric-cell min-w-0 rounded-[20px] border border-line bg-white p-4 shadow-panel sm:p-5 ${primary ? 'metric-primary' : ''}`}>
+      <div className="flex items-center justify-between gap-3">
+        <p className="field-label">{label}</p>
+        {primary && <span className="h-1.5 w-1.5 rounded-full bg-forecast" aria-hidden="true" />}
+      </div>
       <div className="mt-2 flex items-baseline gap-1.5">
         <strong
-          className={`metric-number text-ink ${changing ? 'metric-value-change' : ''} ${primary ? 'text-[1.8rem] sm:text-[2.15rem]' : 'text-[1.25rem] sm:text-[1.5rem] lg:text-[1.7rem]'}`}
+          className={`metric-number font-mono text-ink ${changing ? 'metric-value-change' : ''} ${primary ? 'text-[1.85rem] sm:text-[2.1rem]' : 'text-[1.45rem] sm:text-[1.65rem]'}`}
           aria-live="polite"
         >{metricValue}</strong>
         <span className="text-[10px] font-medium text-muted">MW</span>
       </div>
-      <p className="mt-1.5 text-[10px] leading-4 text-muted sm:text-[11px]">{note}</p>
+      <p className="mt-2 text-[11px] leading-4 text-muted">{note}</p>
     </div>
   )
 }
@@ -54,18 +57,12 @@ export function OverviewMetrics({ metrics }: { metrics: Metrics }) {
         : 'Balanced on average'
 
   return (
-    <section className="metric-shell overflow-hidden rounded-[14px] border border-line/80 bg-line" aria-label="Forecast overview">
-      <div className="grid gap-px md:grid-cols-[2.3fr_2.75fr]">
-        <div className="grid grid-cols-2 gap-px bg-line">
-          <Metric label="Expected wind" value={value(metrics.average_forecast_mw)} note="Average at decision time" primary />
-          <Metric label="Actual generation" value={value(metrics.average_actual_mw)} note="Average national outturn" primary />
-        </div>
-        <div className="grid grid-cols-3 gap-px bg-line">
-          <Metric label="Forecast bias" value={signedValue(metrics.bias_mw)} note={biasNote} />
-          <Metric label="MAE" value={value(metrics.mae_mw)} note="Typical absolute miss" />
-          <Metric label="RMSE" value={value(metrics.rmse_mw)} note="Weights larger misses" />
-        </div>
-      </div>
+    <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5" aria-label="Forecast overview">
+      <Metric label="Expected wind" value={value(metrics.average_forecast_mw)} note="Average at decision time" primary />
+      <Metric label="Actual generation" value={value(metrics.average_actual_mw)} note="Average national outturn" primary />
+      <Metric label="Forecast bias" value={signedValue(metrics.bias_mw)} note={biasNote} />
+      <Metric label="MAE" value={value(metrics.mae_mw)} note="Typical absolute miss" />
+      <Metric label="RMSE" value={value(metrics.rmse_mw)} note="Weights larger misses" />
     </section>
   )
 }

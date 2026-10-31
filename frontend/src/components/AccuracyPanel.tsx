@@ -10,7 +10,7 @@ export function AccuracyPanel({ metrics }: { metrics: Metrics }) {
         : 'Neutral bias: forecast errors balanced across the day.'
 
   return (
-    <section className="py-1 lg:pr-6">
+    <section className="rounded-[22px] border border-line bg-white p-5 shadow-panel sm:p-6">
       <p className="section-kicker">Forecast accuracy</p>
       <h2 className="mt-1 text-lg font-semibold tracking-[-0.02em]">How to read the error metrics</h2>
 

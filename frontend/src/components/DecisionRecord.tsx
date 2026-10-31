@@ -6,13 +6,13 @@ interface DecisionRecordProps {
 
 export function DecisionRecord({ methodology, publications, interpolated }: DecisionRecordProps) {
   return (
-    <section className="py-1 lg:border-l lg:border-line lg:pl-6">
+    <section className="rounded-[22px] border border-line bg-white p-5 shadow-panel sm:p-6">
       <p className="section-kicker">Data treatment</p>
       <h2 className="mt-1 text-lg font-semibold tracking-[-0.02em]">Selection and alignment</h2>
 
-      <p className="mt-4 text-xs leading-5 text-muted">{methodology}</p>
+      <p className="mt-4 max-w-2xl text-xs leading-5 text-muted">{methodology}</p>
 
-      <div className="mt-5 grid grid-cols-2 gap-x-6 border-y border-line py-3">
+      <div className="mt-5 grid grid-cols-2 gap-x-6 rounded-2xl bg-canvas p-4">
         <div>
           <p className="field-label">Forecast vintage</p>
           <p className="mt-1 text-sm font-medium tabular-nums text-ink">{publications.length || '—'}</p>

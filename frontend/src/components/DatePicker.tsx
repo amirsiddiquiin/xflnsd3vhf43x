@@ -1,17 +1,4 @@
-import { useEffect, useState } from 'react'
-import {
-  FloatingFocusManager,
-  FloatingPortal,
-  autoUpdate,
-  flip,
-  offset,
-  shift,
-  useClick,
-  useDismiss,
-  useFloating,
-  useInteractions,
-  useRole,
-} from '@floating-ui/react'
+import { useEffect, useRef, useState } from 'react'
 import { DayPicker } from 'react-day-picker'
 import { dateLabel } from '../format'
 
@@ -49,21 +36,27 @@ export function DatePicker({ value, onChange }: DatePickerProps) {
   const selected = parseDate(value)
   const [open, setOpen] = useState(false)
   const [month, setMonth] = useState(selected)
-  const { refs, floatingStyles, context } = useFloating({
-    open,
-    onOpenChange: setOpen,
-    placement: 'bottom-start',
-    whileElementsMounted: autoUpdate,
-    middleware: [offset(6), flip({ padding: 12 }), shift({ padding: 12 })],
-  })
-  const click = useClick(context)
-  const dismiss = useDismiss(context)
-  const role = useRole(context, { role: 'dialog' })
-  const { getReferenceProps, getFloatingProps } = useInteractions([click, dismiss, role])
+  const shellRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setMonth(selected)
   }, [value])
+
+  useEffect(() => {
+    if (!open) return
+    const closeOnOutsidePress = (event: PointerEvent) => {
+      if (!shellRef.current?.contains(event.target as Node)) setOpen(false)
+    }
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('pointerdown', closeOnOutsidePress)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsidePress)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [open])
 
   function selectDate(next: Date | undefined) {
     if (!next) return
@@ -72,29 +65,27 @@ export function DatePicker({ value, onChange }: DatePickerProps) {
   }
 
   return (
-    <>
+    <div className="date-picker-shell" ref={shellRef}>
       <button
-        ref={refs.setReference}
         type="button"
         className="date-trigger"
         aria-label={`Choose delivery date, currently ${dateLabel.format(new Date(`${value}T12:00:00Z`))}`}
         aria-expanded={open}
-        {...getReferenceProps()}
+        aria-haspopup="dialog"
+        aria-controls="delivery-date-popover"
+        onClick={() => setOpen((current) => !current)}
       >
         <span>{dateLabel.format(new Date(`${value}T12:00:00Z`))}</span>
         <span className="text-muted"><CalendarIcon /></span>
       </button>
 
       {open && (
-        <FloatingPortal>
-          <FloatingFocusManager context={context} modal={false} returnFocus>
-            <div
-              ref={refs.setFloating}
-              style={floatingStyles}
-              className="date-popover"
-              aria-label="Choose a delivery date"
-              {...getFloatingProps()}
-            >
+        <div
+          id="delivery-date-popover"
+          className="date-popover"
+          role="dialog"
+          aria-label="Choose a delivery date"
+        >
               <DayPicker
                 mode="single"
                 required
@@ -115,10 +106,8 @@ export function DatePicker({ value, onChange }: DatePickerProps) {
                 }}
               />
               <p className="date-popover-note">Delivery dates for decisions made 1–31 January</p>
-            </div>
-          </FloatingFocusManager>
-        </FloatingPortal>
+        </div>
       )}
-    </>
+    </div>
   )
 }
