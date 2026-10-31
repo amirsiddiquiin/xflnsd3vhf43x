@@ -1,110 +1,380 @@
 # UK Wind Generation Forecast Dashboard
 
-A small full-stack hiring-assignment project that compares the wind forecast available at a day-ahead purchase decision with actual national wind generation. Data is requested live from the official Elexon Insights API; dashboard values are not hardcoded.
+A full-stack analytical dashboard for evaluating **day-ahead wind generation forecasts against actual national wind generation in Great Britain**.
 
-## Technology
+Built as part of a Full Stack Software Engineer hiring assignment, the application helps electricity purchasing teams understand what wind generation was forecast at the time of a purchasing decision and how accurate those forecasts proved to be.
 
-- React, TypeScript, Tailwind CSS, Recharts and Vite
-- FastAPI, Pandas and HTTPX
-- Docker and Docker Compose
+The dashboard uses historical data from the official **Elexon Insights API**. Forecast and actual generation values are retrieved through the application backend rather than hardcoded into the interface.
 
-## Quick start with Docker
+## Live Application
+
+**Dashboard:** https://wind-forecast-assignment.vercel.app/
+
+**GitHub Repository:** https://github.com/amirsiddiquiin/xflnsd3vhf43x
+
+The dashboard focuses on **purchasing decisions made during January 2026**, including the corresponding delivery periods.
+
+## Features
+
+- **Day-ahead forecast analysis:** Displays the latest eligible wind generation forecast available before the assumed purchasing decision cutoff.
+- **Forecast vs actual visualization:** Interactive chart comparing expected and actual national wind generation.
+- **Forecast accuracy metrics:** Calculates Mean Absolute Error (MAE), Root Mean Squared Error (RMSE), and forecast bias.
+- **Decision chronology:** Displays forecast publication time, purchasing cutoff, and delivery date.
+- **Historical date selection:** Supports the January 2026 purchasing decision window.
+- **Transparent data alignment:** Distinguishes directly published hourly forecast observations from derived half-hourly estimates.
+- **Business interpretation:** Explains forecast overestimation or underestimation in the context of electricity purchasing decisions.
+- **Responsive interface:** Designed for clear data exploration across desktop and smaller screens.
+
+## Technology Stack
+
+| Layer | Technologies |
+|---|---|
+| Frontend | React, TypeScript, Vite |
+| Styling | Tailwind CSS |
+| Visualization | Recharts |
+| Backend | Python, FastAPI |
+| Data processing | Pandas |
+| HTTP client | HTTPX |
+| Containerization | Docker, Docker Compose |
+| Deployment | Vercel |
+| Data source | Elexon Insights API |
+
+## Project Structure
+
+```text
+xflnsd3vhf43x/
+├── backend/
+│   ├── app/                  # API routes, Elexon client, analytics and schemas
+│   ├── tests/                # Analytics and API regression tests
+│   ├── Dockerfile
+│   └── requirements.txt
+├── frontend/
+│   ├── src/                  # React components, chart, styles and types
+│   ├── Dockerfile
+│   └── nginx.conf            # Static hosting and /api reverse proxy
+├── docker-compose.yml        # Local frontend and backend stack
+└── README.md
+```
+
+The project separates frontend presentation from backend data retrieval and analysis.
+
+## Getting Started
+
+### Prerequisites
+
+For Docker-based execution:
+
+- Docker
+- Docker Compose
+
+For local development:
+
+- Python 3.12 (recommended)
+- Node.js and npm
+
+### Option 1: Run with Docker
+
+From the project root:
 
 ```bash
 docker compose up --build
 ```
 
-Open <http://localhost:3000>. The backend API and interactive docs are available at <http://localhost:8000/docs>.
+Once the containers are running:
 
-## Local development
+| Service | URL |
+|---|---|
+| Frontend dashboard | http://localhost:3000 |
+| Backend API | http://localhost:8000 |
+| Interactive API documentation | http://localhost:8000/docs |
 
-Backend (Python 3.12 recommended):
+Docker Compose starts the frontend and backend services together.
+
+### Option 2: Run Locally
+
+**Start the Python backend**
 
 ```bash
 cd backend
+
 python -m venv .venv
 source .venv/bin/activate
+
 pip install -r requirements.txt
+
 uvicorn app.main:app --reload
 ```
 
-Frontend, in a second terminal:
+The backend runs at:
+
+http://localhost:8000
+
+**Start the React frontend**
+
+Open another terminal:
 
 ```bash
 cd frontend
+
 npm install
 npm run dev
 ```
 
-Open <http://localhost:5173>. Vite proxies `/api` requests to the backend on port 8000.
+The frontend runs at:
 
-## API
+http://localhost:5173
 
-- `GET /api/health`
-- `GET /api/wind-data?date=2026-01-15`
+During local development, Vite proxies `/api` requests to the backend on port 8000.
 
-The `date` parameter is a **delivery date**. It accepts 2 January through 1 February 2026, which corresponds to purchasing decision cutoffs from 1–31 January under the prior-day noon assumption. This intentionally includes the 31 January decision/1 February delivery boundary and excludes the 31 December decision/1 January delivery boundary.
+## API Endpoints
 
-## Project structure
+| Endpoint | Description |
+|---|---|
+| `GET /api/health` | Backend health check |
+| `GET /api/wind-data?date=2026-01-15` | Forecast and actual generation analysis for a selected delivery date |
+
+### Date Parameter
+
+The `date` parameter represents the **electricity delivery date**, not the purchasing decision date.
+
+Supported delivery dates range from **2 January 2026 through 1 February 2026**, corresponding to purchasing decision dates from 1–31 January 2026 under the assumed prior-day cutoff.
+
+For example:
 
 ```text
-wind-forecast-assignment/
-├── backend/
-│   ├── app/                 # FastAPI routes, Elexon client, analytics, schemas
-│   ├── tests/               # Analytics and API regression tests
-│   ├── Dockerfile
-│   └── requirements.txt
-├── frontend/
-│   ├── src/                 # React components, chart, styles and types
-│   ├── Dockerfile
-│   └── nginx.conf           # Static hosting and /api reverse proxy
-├── docker-compose.yml       # Backend + frontend local stack
-└── README.md
+Purchase decision: 14 January 2026
+Delivery date:     15 January 2026
 ```
 
-## Data logic and assumptions
+This distinction ensures that the January 31 purchasing decision is included, even though its associated delivery occurs on February 1.
 
-The day-ahead purchase decision cutoff is assumed to be **12:00 Europe/London on the calendar day before delivery**. This is explicit and easy to change in `backend/app/analytics.py`.
+## Data Sources
 
-For a chosen delivery date, the backend:
+The application uses two official Elexon Insights datasets.
 
-1. Requests FUELHH data by settlement date and filters defensively to `fuelType = WIND`.
-2. Requests WINDFOR vintages from the three days preceding the cutoff through the cutoff itself.
-3. Excludes every forecast whose `publishTime` is after the cutoff.
-4. For each forecast `startTime`, keeps the latest eligible publication. Duplicate actual records similarly keep the latest publication.
-5. Uses UTC internally and Europe/London for the business cutoff and display. This remains safe across daylight-saving transitions.
-6. Linearly interpolates only the single half-hour between adjacent hourly WINDFOR points. It does not extrapolate missing start/end values or bridge a missing source hour. Interpolated intervals are identified in the API response and UI.
-7. Joins forecast and actual generation on delivery interval and calculates error as `forecast - actual`.
-8. Excludes unmatched intervals from accuracy metrics and reports their count.
+### 1. FUELHH — Actual Generation
 
-The three-day forecast lookback is intentionally wider than Elexon's normal publication cadence so the latest eligible vintage is still found if a scheduled update is missing.
+Endpoint:
 
-## Deployment
+https://data.elexon.co.uk/bmrs/api/v1/datasets/FUELHH/stream
 
-No public Vercel or Heroku deployment URL has been configured yet. The Dockerized application is ready for local or container-hosted evaluation, but the assignment is not submission-ready until a public deployment is created and its anonymous/incognito access is verified.
+Used to retrieve actual electricity generation observations.
 
-## Metrics
+The backend filters records to:
 
-- **MAE:** mean absolute value of interval errors.
-- **RMSE:** square root of the mean squared interval error.
-- **Bias:** mean error. Positive bias means over-forecasting; negative bias means under-forecasting.
+```text
+fuelType = WIND
+```
 
-## Tests
+Actual generation is evaluated at half-hourly delivery intervals.
+
+### 2. WINDFOR — Wind Generation Forecasts
+
+Endpoint:
+
+https://data.elexon.co.uk/bmrs/api/v1/datasets/WINDFOR/stream
+
+Used to retrieve historical wind generation forecasts.
+
+Important fields include:
+
+- `startTime` — Forecast delivery interval.
+- `publishTime` — Time when the forecast was published.
+- `generation` — Forecast wind generation in MW.
+
+The publication timestamp allows the application to determine which forecasts were available before the purchasing decision.
+
+No API key was required for these endpoints at the time of implementation.
+
+## Forecast Selection Methodology
+
+The dashboard reconstructs the forecast information available at a historical day-ahead purchasing decision.
+
+### Purchasing Cutoff Assumption
+
+The assumed purchasing cutoff is:
+
+**12:00 Europe/London on the calendar day before electricity delivery.**
+
+This is an analytical assumption, not a claim that noon is the official deadline for every electricity purchasing arrangement.
+
+The cutoff is configured in:
+
+`backend/app/analytics.py`
+
+### Data Processing Steps
+
+1. **Retrieve actual generation:** Request FUELHH data for the selected delivery date and filter to wind generation.
+2. **Retrieve historical forecasts:** Request WINDFOR observations from the three days preceding the purchasing cutoff through the cutoff.
+3. **Exclude future information:** Remove every forecast with a `publishTime` later than the decision cutoff.
+4. **Select eligible forecasts:** For each forecast delivery timestamp, retain the latest forecast published on or before the cutoff.
+5. **Handle duplicates:** For duplicate actual records, retain the latest publication according to the implemented deduplication rule.
+6. **Normalize timestamps:** Use UTC internally and Europe/London for the business cutoff and user-facing display.
+7. **Align intervals:** Match forecast observations with actual generation intervals, applying the documented interpolation rules where necessary.
+8. **Calculate errors:** Compare eligible forecast values against actual generation.
+9. **Report completeness:** Exclude unmatched intervals from accuracy calculations and report the number of matched observations.
+
+### Preventing Look-Ahead Bias
+
+The central forecast eligibility rule is:
+
+```text
+forecast.publishTime <= purchasingCutoff
+```
+
+This prevents forecasts published after the historical purchasing decision from being included in the evaluation.
+
+Without this restriction, an accuracy analysis could unintentionally benefit from information that was not available when the purchasing decision was made.
+
+### Hourly-to-Half-Hourly Alignment
+
+WINDFOR provides hourly forecast observations, while FUELHH actual generation is available at half-hourly intervals.
+
+To support interval-level comparison, the application uses linear interpolation for a single intervening half-hour between adjacent hourly forecast observations.
+
+For example:
+
+```text
+10:00  Published forecast
+10:30  Derived half-hour estimate
+11:00  Published forecast
+```
+
+The application does not extrapolate missing starting or ending observations or interpolate across missing source hours.
+
+Derived values are identified in the API response and dashboard.
+
+**Methodological limitation:** Interpolated half-hourly values are estimates, not independently published Elexon forecasts. Accuracy metrics calculated using these values should be interpreted accordingly.
+
+## Forecast Accuracy Metrics
+
+For each matched delivery interval, the forecast error is defined as:
+
+```text
+Error = Forecast Generation - Actual Generation
+```
+
+All three metrics are expressed in megawatts (MW).
+
+### Mean Absolute Error (MAE)
+
+Measures the average magnitude of forecast errors, regardless of direction.
+
+```text
+MAE = mean(abs(Forecast - Actual))
+```
+
+A lower MAE indicates smaller average forecast errors.
+
+### Root Mean Squared Error (RMSE)
+
+Measures forecast error while assigning greater weight to larger deviations.
+
+```text
+RMSE = sqrt(mean((Forecast - Actual)^2))
+```
+
+A lower RMSE indicates fewer or smaller large forecast errors.
+
+### Forecast Bias
+
+Measures whether the forecast systematically overestimates or underestimates generation.
+
+```text
+Bias = mean(Forecast - Actual)
+```
+
+Interpretation:
+
+- **Positive bias:** Forecast generation was higher than actual generation.
+- **Negative bias:** Forecast generation was lower than actual generation.
+- **Bias near zero:** Average signed error is small, although individual forecast errors may still be significant.
+
+Only matched observations are included in the calculations.
+
+## Dashboard Design
+
+The dashboard is organized around the purchasing decision workflow.
+
+**Decision context:** Shows forecast publication time, assumed purchasing cutoff, and electricity delivery date.
+
+**Generation overview:** Presents expected generation, actual generation, and forecast bias.
+
+**Generation profile:** Compares forecast and actual wind generation across delivery intervals.
+
+**Forecast accuracy:** Displays MAE and RMSE with concise explanations.
+
+**Decision insight:** Provides a business-oriented interpretation of the forecast error.
+
+**Methodology:** Explains how historical forecasts were selected and aligned with actual observations.
+
+The interface is intentionally focused on the assignment requirements rather than additional unrelated functionality.
+
+## Testing
+
+Backend regression tests are included in:
+
+`backend/tests/`
+
+Run them using:
 
 ```bash
 cd backend
 pytest
 ```
 
-The tests cover WIND filtering, duplicate handling, cutoff-based forecast selection, hourly-to-half-hour interpolation, interval matching, MAE, RMSE, bias, missing data, empty inputs, health, and date validation.
+The test suite covers:
 
-## Official data endpoints
+- Wind fuel filtering
+- Duplicate record handling
+- Forecast selection using publication cutoffs
+- Hourly-to-half-hourly interpolation
+- Forecast and actual interval matching
+- MAE, RMSE, and bias calculations
+- Missing data and empty inputs
+- API health endpoint
+- Delivery date validation
 
-- FUELHH stream: `https://data.elexon.co.uk/bmrs/api/v1/datasets/FUELHH/stream`
-- WINDFOR stream: `https://data.elexon.co.uk/bmrs/api/v1/datasets/WINDFOR/stream`
+These tests help validate the analytical logic independently of the frontend presentation.
 
-No API key is required by these endpoints at the time of implementation.
+## Deployment
 
-## AI usage disclosure
+**Live dashboard:**
 
-AI-assisted development was used to help scaffold, implement, test, and refine this hiring-assignment project. The data-selection rules, time alignment, calculations, generated code, and user interface were reviewed and validated against the official Elexon API behaviour and live historical responses.
+https://wind-forecast-assignment.vercel.app/
+
+**Public source repository:**
+
+https://github.com/amirsiddiquiin/xflnsd3vhf43x
+
+The application is available through its Vercel deployment.
+
+The repository also includes Docker configuration for running the frontend and Python backend locally.
+
+The live deployment and public repository should be tested in a private or incognito browser window before evaluation.
+
+## Assumptions and Limitations
+
+- The purchasing cutoff is assumed to be noon on the calendar day before delivery.
+- Forecast accuracy is evaluated against historical national wind generation, not individual wind farms.
+- Hourly forecast observations may be interpolated to align with half-hourly actual generation.
+- Interpolated observations are identified separately from published forecast values.
+- Missing or unmatched intervals are excluded from accuracy calculations.
+- The three-day forecast lookback is a practical data retrieval choice.
+- The dashboard does not estimate financial losses, electricity prices, or optimal purchasing volumes.
+- Historical forecast accuracy does not guarantee future forecasting performance.
+- Data availability and completeness depend on the upstream Elexon Insights API.
+
+## AI Usage Disclosure
+
+AI-assisted development tools were used to support project scaffolding, implementation, debugging, testing, documentation, and UI refinement.
+
+The project was developed for this hiring assignment using the official Elexon datasets and documented analytical rules.
+
+Forecast selection, timestamp alignment, accuracy calculations, and application behavior were reviewed against the intended methodology and historical Elexon responses.
+
+## Project Purpose
+
+This pilot demonstrates how historical wind forecasts can be evaluated from the perspective of a day-ahead electricity purchasing decision.
+
+It aims to make forecast performance transparent, measurable, and understandable through a focused full-stack application.
